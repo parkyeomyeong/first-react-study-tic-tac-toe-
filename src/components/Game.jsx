@@ -9,13 +9,15 @@ export default class Game extends React.Component {
       history: [{
         squares: Array(9).fill(null),
       }],
+      stepNumber: 0,
       xIsNext: true,
     };
   }
 
   handleClick(i){
     //원본을 얕은복사해서 새로운 객체로 반환. 원본배열 바뀌지 않음~
-    const history = this.state.history;
+    // slice(start, end) 이면 start~ end-1까지만 복사이므로 여기서 end에 +1 해주는게 맞지
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     if (calculateWinner(squares) || squares[i]){
@@ -27,14 +29,37 @@ export default class Game extends React.Component {
       history : history.concat([{
         squares : squares,
       }]),
+      stepNumber : history.length,
       xIsNext : !this.state.xIsNext,
     });
   }
 
+  jumpTo(step){
+    //setState할때 모든 프로퍼티(여기선 history)를 업데이트 하지 않아도 되나봐?
+    this.setState({
+      stepNumber : step,
+      xIsNext : (step % 2) === 0,
+      }
+    );
+  }
+
   render() {
       const history = this.state.history;
-      const current = history[history.length - 1];
+      const current = history[this.state.stepNumber];
       const winner = calculateWinner(current.squares);
+
+      // map 함수에서 첫번째인 step은 각각의 값, 두번쨰 argument는 index이다
+      const moves = history.map((step, move) => {
+        const desc = move?
+          `Go to move #${move}` :
+          `Go to game start`;
+        return (
+          <li key={move}>
+            <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          </li>
+        );
+      })
+
       let status;
       if(winner){
         status = `Winner : ${winner}`;
@@ -51,7 +76,10 @@ export default class Game extends React.Component {
           </div>
           <div className="game-info">
             <div>{status}</div>
-            <ol>{/* TODO */}</ol>
+            <ol>
+              {/* TODO */}
+              {moves}
+            </ol>
           </div>
         </div>
       );
